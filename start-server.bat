@@ -7,7 +7,7 @@ set "DATA_DIR=%~dp0"
 set "DB_DIRECTORY=%DATA_DIR%"
 set "VENV_DIR=%DATA_DIR%\env"
 set "ELECTRUMZ_SERVER=%DATA_DIR%\electrumz_server"
-set "DAEMON_URL=http://<yourrpcuser>:<yourrpcpassword>@127.0.0.1:1979"
+set "DAEMON_URL=http://SpaceZProjects:SpaceZProjects@2042@127.0.0.1:1979"
 set "COIN=BitcoinZ"
 
 
