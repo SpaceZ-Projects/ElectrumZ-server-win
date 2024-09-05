@@ -1,0 +1,34 @@
+'''Script to kick off the server.'''
+
+import asyncio
+import logging
+import sys
+
+from electrumz import Controller, Env
+from electrumz.lib.util import CompactFormatter, make_logger
+
+
+def main():
+    '''Set up logging and run the server.'''
+    log_fmt = Env.default('LOG_FORMAT', '%(levelname)s:%(name)s:%(message)s')
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(CompactFormatter(log_fmt))
+    logger = make_logger('electrumz', handler=handler, level='INFO')
+
+    logger.info('ElectrumZ server starting')
+    try:
+        if sys.version_info < (3, 8):
+            raise RuntimeError('ElectrumZ requires Python 3.8 or greater')
+        env = Env()
+        logger.info(f'logging level: {env.log_level}')
+        logger.setLevel(env.log_level)
+        controller = Controller(env)
+        asyncio.run(controller.run())
+    except Exception:
+        logger.exception('ElectrumZ server terminated abnormally')
+    else:
+        logger.info('ElectrumZ server terminated normally')
+
+
+if __name__ == '__main__':
+    main()
