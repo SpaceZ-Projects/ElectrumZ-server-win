@@ -1,15 +1,177 @@
-'''Script to kick off the server.'''
-
 import asyncio
 import logging
 import sys
+import os
+import datetime
+import subprocess
+from pathlib import Path
+from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.serialization import BestAvailableEncryption, Encoding, PrivateFormat
 
 from electrumz import Controller, Env
 from electrumz.lib.util import CompactFormatter, make_logger
 
 
+
+
+def set_environment_variables(logger):
+    """Set required environment variables."""
+    appdata_local_path = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local'))
+    db_directory_path = appdata_local_path / 'BTCZCommunity' / 'ElectrumZ'
+    db_directory_path.mkdir(parents=True, exist_ok=True)
+    
+    os.environ['DB_DIRECTORY'] = str(db_directory_path)
+    os.environ['DAEMON_URL'] = 'http://SpaceZProjects:SpaceZProjects@2042@127.0.0.1:1979'
+    os.environ['COIN'] = 'BitcoinZ'
+
+    cert_file = db_directory_path / 'electrumz.crt'
+    key_file = db_directory_path / 'electrumz.key'
+    csr_file = db_directory_path / 'electrumz.csr'
+    
+    os.environ['CERT_FILE'] = str(cert_file)
+    os.environ['KEY_FILE'] = str(key_file)
+    os.environ['CSR_FILE'] = str(csr_file)
+    
+    logger.info(f'DB_DIRECTORY set to {os.environ["DB_DIRECTORY"]}')
+    logger.info(f'DAEMON_URL set to {os.environ["DAEMON_URL"]}')
+    logger.info(f'COIN set to {os.environ["COIN"]}')
+    logger.info(f'CERT_FILE set to {os.environ["CERT_FILE"]}')
+    logger.info(f'KEY_FILE set to {os.environ["KEY_FILE"]}')
+    logger.info(f'CSR_FILE set to {os.environ["CSR_FILE"]}')
+
+
+def generate_ssl_files(logger):
+    """Generate SSL private key, CSR, and self-signed certificate if they do not exist."""
+    cert_file = os.environ['CERT_FILE']
+    key_file = os.environ['KEY_FILE']
+    csr_file = os.environ['CSR_FILE']
+
+    if not os.path.exists(cert_file) or not os.path.exists(key_file):
+    # Generate private key
+        private_key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=2048,
+        )
+        
+        
+        with open(os.environ['KEY_FILE'], 'wb') as key_file:
+            key_file.write(
+                private_key.private_bytes(
+                    encoding=Encoding.PEM,
+                    format=PrivateFormat.PKCS8,
+                    encryption_algorithm=BestAvailableEncryption(b'bitcoinzcommunity2024')
+                )
+            )
+        logger.info(f'Private key generated at {os.environ["KEY_FILE"]}')
+        
+        subject = x509.Name([
+            x509.NameAttribute(x509.NameOID.COUNTRY_NAME, u'US'),
+            x509.NameAttribute(x509.NameOID.STATE_OR_PROVINCE_NAME, u'State'),
+            x509.NameAttribute(x509.NameOID.LOCALITY_NAME, u'City'),
+            x509.NameAttribute(x509.NameOID.ORGANIZATION_NAME, u'SpaceZ'),
+            x509.NameAttribute(x509.NameOID.COMMON_NAME, u'getbtcz.com'),
+        ])
+        
+        csr = x509.CertificateSigningRequestBuilder().subject_name(
+            subject
+        ).sign(private_key, hashes.SHA256())
+        
+        with open(os.environ['CSR_FILE'], 'wb') as csr_file:
+            csr_file.write(csr.public_bytes(encoding=Encoding.PEM))
+        
+        logger.info(f'CSR generated at {os.environ["CSR_FILE"]}')
+        
+        certificate = x509.CertificateBuilder().subject_name(
+            subject
+        ).issuer_name(
+            subject
+        ).public_key(
+            private_key.public_key()
+        ).serial_number(
+            x509.random_serial_number()
+        ).not_valid_before(
+            datetime.datetime.utcnow()
+        ).not_valid_after(
+            datetime.datetime.utcnow() + datetime.timedelta(days=365)
+        ).sign(private_key, hashes.SHA256())
+        
+        with open(os.environ['CERT_FILE'], 'wb') as cert_file:
+            cert_file.write(certificate.public_bytes(encoding=Encoding.PEM))
+        
+        logger.info(f'Self-signed certificate generated at {os.environ["CERT_FILE"]}')
+        
+        # Delete CSR file
+        os.remove(os.environ['CSR_FILE'])
+        logger.info(f'CSR file deleted: {os.environ["CSR_FILE"]}')
+
+
+
+
+def create_config_file(logger):
+    """Create the configuration file at DB_DIRECTORY/config.env."""
+    config_path = os.path.join(os.environ['DB_DIRECTORY'], 'config.env')
+
+    if not os.path.exists(config_path):
+        config_content = (
+            f'ALLOW_ROOT=1\n'
+            f'DB_DIRECTORY={os.environ["DB_DIRECTORY"]}\n'
+            f'SERVICES=tcp://127.0.0.1:50001,ssl://127.0.0.1:50002,wss://127.0.0.1:50004,rpc://127.0.0.1:8000\n'
+            f'SSL_CERTFILE={os.environ["CERT_FILE"]}\n'
+            f'SSL_KEYFILE={os.environ["KEY_FILE"]}\n'
+            f'INITIAL_CONCURRENT=1000000\n'
+            f'COST_SOFT_LIMIT=1000000\n'
+            f'COST_HARD_LIMIT=1000000\n'
+            f'REQUEST_SLEEP=0\n'
+            f'HOST=127.0.0.1\n'
+        )
+        
+        config_path = os.path.join(os.environ['DB_DIRECTORY'], 'config.env')
+        
+        try:
+            with open(config_path, 'w') as config_file:
+                config_file.write(config_content)
+            logger.info(f'Configuration file created at {config_path}')
+        except IOError as e:
+            logger.error(f'Failed to create configuration file: {e}')
+            raise
+
+
+def run_firewall_in_background(logger):
+    """Run firewall.bat in the background."""
+    batch_file_path = os.path.join(os.path.dirname(__file__), 'firewall.bat')
+    if os.path.exists(batch_file_path):
+        try:
+            # Run the batch script in the background
+            subprocess.Popen([batch_file_path], creationflags=subprocess.CREATE_NO_WINDOW)
+            logger.info(f'Firewall script started in the background: {batch_file_path}')
+        except Exception as e:
+            logger.error(f'Failed to start firewall script: {e}')
+            raise
+    else:
+        logger.error(f'firewall.bat not found at {batch_file_path}')
+
+
+
+def print_ansi_art(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            ansi_art = file.read()
+        print(ansi_art)
+    except FileNotFoundError:
+        print(f"Error: The file {file_path} was not found.")
+    except IOError:
+        print(f"Error: Could not read the file {file_path}.")
+
+
+
+
 def main():
-    '''Set up logging and run the server.'''
+    """Set up logging, environment variables, and run the server."""
+    ansi_file_path = os.path.join(os.path.dirname(__file__), 'img', 'electrumz.ans')
+    print_ansi_art(ansi_file_path)
+
     log_fmt = Env.default('LOG_FORMAT', '%(levelname)s:%(name)s:%(message)s')
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(CompactFormatter(log_fmt))
@@ -19,8 +181,14 @@ def main():
     try:
         if sys.version_info < (3, 8):
             raise RuntimeError('ElectrumZ requires Python 3.8 or greater')
+
+        set_environment_variables(logger)
+        generate_ssl_files(logger)
+        create_config_file(logger)
+        run_firewall_in_background(logger)
+
         env = Env()
-        logger.info(f'logging level: {env.log_level}')
+        logger.info(f'Logging level: {env.log_level}')
         logger.setLevel(env.log_level)
         controller = Controller(env)
         asyncio.run(controller.run())
@@ -28,7 +196,6 @@ def main():
         logger.exception('ElectrumZ server terminated abnormally')
     else:
         logger.info('ElectrumZ server terminated normally')
-
 
 if __name__ == '__main__':
     main()
