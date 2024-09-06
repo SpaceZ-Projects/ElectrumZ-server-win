@@ -1,9 +1,9 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 env/
+dist/
+build/
 hist/
 meta/
 utxo/
-*.env
-*.crt
-*.key
+*.exe
