@@ -1,7 +1,5 @@
 # ElectrumZ-Server (Windows)
 
-## Getting Started :
-
 ### Requirements :
 
 - Python 3.8 or higher
@@ -14,14 +12,14 @@ git clone https://github.com/SpaceZ-Projects/ElectrumZ-server-win.git
 cd ElectrumZ-server-win
 ```
 
-- Setup virtual environment :
+- Build ElectrumZ :
 
-Start `setup.bat` file ( as administrator to allow ports 50001 50002 50004 8000)
+Start `build-win.bat` file
 
 
 - Run ElectrumZ :
 
-Start `start-server.bat` file
+Start `ElectrumZ-Server.exe` file ( as administrator to allow ports 50001 50002 50004 8000)
 
 - example of bitcoinz.conf file :
 
