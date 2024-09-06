@@ -47,3 +47,7 @@ addnode=explorer.btcz.rocks:1989
 addnode=74.208.91.217:8233
 addnode=37.187.76.80:1989
 ```
+
+## Screenshots :
+
+<p align="center"><img src="https://github.com/SpaceZ-Projects/ElectrumZ-server-win/blob/main/screenshots/electrumz_server.png" </p>
