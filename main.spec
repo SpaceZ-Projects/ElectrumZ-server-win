@@ -19,7 +19,8 @@ a = Analysis(
         'plyvel',
         'aiohttp',
         'cryptography',
-        'OpenSSL'],
+        'OpenSSL',
+        'winloop'],
 
     hookspath=[],
     hooksconfig={},

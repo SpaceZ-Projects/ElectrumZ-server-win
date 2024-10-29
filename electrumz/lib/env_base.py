@@ -2,7 +2,6 @@
 
 '''Class for server environment configuration and defaults.'''
 
-
 from os import environ
 
 from electrumz.lib.util import class_logger
@@ -57,18 +56,26 @@ class EnvBase:
             raise cls.Error(
                 f'cannot parse envvar {envvar} value {value}'
             ) from e
+        
 
     @classmethod
     def obsolete(cls, envvars):
         bad = [envvar for envvar in envvars if environ.get(envvar)]
         if bad:
             raise cls.Error(f'remove obsolete environment variables {bad}')
+        
 
     def event_loop_policy(self):
+        '''Set the appropriate event loop policy based on the platform.'''
         policy = self.default('EVENT_LOOP_POLICY', None)
         if policy is None:
-            return None
-        if policy == 'uvloop':
-            import uvloop
-            return uvloop.EventLoopPolicy()
-        raise self.Error(f'unknown event loop policy "{policy}"')
+            return
+
+        try:
+            import winloop
+            winloop.EventLoopPolicy()
+        except ImportError as e:
+            raise self.Error(f'Failed to import event loop: {e}')
+        except Exception as e:
+            raise self.Error(f'Unknown event loop policy "{policy}": {e}')
+

@@ -172,6 +172,7 @@ class SessionManager:
             self._sslc = ssl.SSLContext(ssl.PROTOCOL_TLS)
             self._sslc.load_cert_chain(self.env.ssl_certfile, keyfile=self.env.ssl_keyfile)
         return self._sslc
+    
 
     async def _start_servers(self, services):
         for service in services:
@@ -184,11 +185,8 @@ class SessionManager:
                 session_class = LocalRPC
             else:
                 session_class = self.env.coin.SESSIONCLS
-            if service.protocol in ('ws', 'wss'):
-                serve = serve_ws
-            else:
-                serve = serve_rs
-            # FIXME: pass the service not the kind
+            serve = serve_rs
+
             session_factory = partial(session_class, self, self.db, self.mempool,
                                       self.peer_mgr, kind)
             host = None if service.host == 'all_interfaces' else str(service.host)
@@ -199,6 +197,7 @@ class SessionManager:
                 self.logger.error(f'{kind} server failed to listen on {service.address}: {e}')
             else:
                 self.logger.info(f'{kind} server listening on {service.address}')
+                
 
     async def _start_external_servers(self):
         '''Start listening on TCP and SSL ports, but only if the respective
