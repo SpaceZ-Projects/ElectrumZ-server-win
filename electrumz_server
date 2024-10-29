@@ -26,7 +26,7 @@ def set_environment_variables(logger):
     
     os.environ['HOME'] = str(db_directory_path)
     os.environ['DB_DIRECTORY'] = str(db_directory_path)
-    os.environ['DAEMON_URL'] = 'http://7yQEoUowxyPXp8ca:RRVhODnezAWo7S0HHv1WXLXuLVQOIeF3@127.0.0.1:7771'
+    os.environ['DAEMON_URL'] = 'http://rpcuser:rpcpassword@127.0.0.1:rpcport'
     os.environ['COIN'] = 'BitcoinZ'
     os.environ['EVENT_LOOP_POLICY'] = 'winloop'
     os.environ['SERVICES'] = 'tcp://:50001,ssl://:50002,wss://:50004,rpc://0.0.0.0:8000'

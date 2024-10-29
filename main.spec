@@ -4,7 +4,7 @@
 a = Analysis(
     ['electrumz_server'],
     pathex=['.'],
-    binaries=[],
+    binaries=[('env/Lib/site-packages/winloop/*', 'winloop')],
     datas=[
         ('electrumz_server', '.'),
         ('electrumz_rpc', '.'),
