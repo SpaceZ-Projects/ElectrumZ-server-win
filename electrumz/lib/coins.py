@@ -270,13 +270,30 @@ class BitcoinZ(EquihashMixin, Coin):
     NAME = "BitcoinZ"
     SHORTNAME = "BTCZ"
     NET = "mainnet"
-    P2PKH_VERBYTE = bytes.fromhex("1CB8")
-    P2SH_VERBYTES = (bytes.fromhex("1CBD"),)
     GENESIS_HASH = ('f499ee3d498b4298ac6a64205b8addb7'
                     'c43197e2a660229be65db8a4534d75c1')
+
+    P2PKH_VERBYTE = bytes.fromhex("1CB8")
+    P2SH_VERBYTES = [bytes.fromhex("1CBD")]
+    WIF_BYTE = bytes.fromhex("80")
     DESERIALIZER = lib_tx.DeserializerZcash
+
+    BASIC_HEADER_SIZE = 243
+    HEADER_SIZE_NO_SOLUTION = 140
+
     TX_COUNT = 171976
     TX_COUNT_HEIGHT = 81323
     TX_PER_BLOCK = 3
     RPC_PORT = 1979
     REORG_LIMIT = 800
+    PEERS = [
+        'electrum1.btcz.rocks s t',
+        'electrum2.btcz.rocks s t',
+        'electrum3.btcz.rocks s t',
+    ]    
+
+    @classmethod
+    def block_header(cls, block, height):
+        '''Return the block header bytes'''
+        deserializer = cls.DESERIALIZER(block)
+        return deserializer.read_header(cls.HEADER_SIZE_NO_SOLUTION)
