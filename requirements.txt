@@ -6,3 +6,8 @@ cryptography
 pyopenssl
 pyinstaller
 winloop
+objgraph
+python-rapidjson
+ujson
+blake256
+pycryptodomex

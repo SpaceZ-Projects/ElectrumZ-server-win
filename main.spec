@@ -9,7 +9,6 @@ a = Analysis(
         ('electrumz_server', '.'),
         ('electrumz_rpc', '.'),
         ('electrumz_compact_history', '.'),
-        ('firewall.bat', '.'),
         ('electrumz/*', 'electrumz'),
         ('img/*', 'img')
     ],
@@ -20,7 +19,12 @@ a = Analysis(
         'aiohttp',
         'cryptography',
         'OpenSSL',
-        'winloop'],
+        'winloop',
+        'objgraph',
+        'rapidjson-stubs',
+        'ujson',
+        'blake256',
+        'Cryptodome'],
 
     hookspath=[],
     hooksconfig={},
