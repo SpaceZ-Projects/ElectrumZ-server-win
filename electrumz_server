@@ -33,6 +33,14 @@ def set_environment_variables(logger):
     os.environ['SSL_CERTFILE'] = str(cert_file)
     os.environ['SSL_KEYFILE'] = str(key_file)
     os.environ['CSR_FILE'] = str(csr_file)
+    os.environ['CACHE_MB'] = '1200'
+    os.environ['DB_ENGINE'] = 'leveldb'
+    os.environ['INITIAL_CONCURRENT'] = '1000000'
+    os.environ['COST_SOFT_LIMIT'] = '1000000'
+    os.environ['COST_HARD_LIMIT'] = '1000001'
+    os.environ['REQUEST_SLEEP'] = '0'
+    os.environ['DONATION_ADDRESS'] = ''
+
 
 
 def generate_ssl_files(logger):
@@ -113,7 +121,7 @@ def main():
     ansi_file_path = os.path.join(os.path.dirname(__file__), 'img', 'electrumz.ans')
     print_ansi_art(ansi_file_path)
 
-    log_fmt = Env.default('LOG_FORMAT', '%(levelname)s:%(name)s:%(message)s')
+    log_fmt = Env.default('LOG_FORMAT', '%(asctime)s - %(levelname)s - %(name)s - %(message)s')
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(CompactFormatter(log_fmt))
     logger = make_logger('electrumz', handler=handler, level='INFO')
