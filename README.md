@@ -2,7 +2,7 @@
 
 ### Requirements :
 
-- Python 3.8 or higher
+- Python 3.8
 - Git
 
 Clone the Repository:
@@ -11,10 +11,21 @@ Clone the Repository:
 git clone https://github.com/SpaceZ-Projects/ElectrumZ-server-win.git
 cd ElectrumZ-server-win
 ```
+- Edit the electrumz.conf:
 
-- Build ElectrumZ :
+Before building the server, you need to configure it. Open the electrumz.conf file and update the following settings:
+```
+[server]
+daemon_url = #http://rpcuser:rpcpassword@127.0.0.1:rpcport
+report_services = #tcp://example.com:50001,ssl://example.com:50002,wss://example.com:50004
+cache_mb = 1200
+db_engine = leveldb
+donation_address = 
+```
 
-Start `build-win.bat` file
+- Build ElectrumZ-Server :
+
+Run the build script by executing the `build-win.bat` file
 
 
 - Run ElectrumZ :
