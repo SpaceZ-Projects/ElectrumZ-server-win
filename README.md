@@ -28,10 +28,6 @@ donation_address =
 Run the build script by executing the `build-win.bat` file
 
 
-- Run ElectrumZ :
-
-Start `ElectrumZ-Server.exe` file ( as administrator to allow ports 50001 50002 50004 8000)
-
 - example of bitcoinz.conf file :
 
 ```
