@@ -10,7 +10,8 @@ a = Analysis(
         ('electrumz_rpc', '.'),
         ('electrumz_compact_history', '.'),
         ('electrumz/*', 'electrumz'),
-        ('img/*', 'img')
+        ('img/*', 'img'),
+        ('electrumz.conf', '.')
     ],
     hiddenimports=[
         'aiorpcx',
