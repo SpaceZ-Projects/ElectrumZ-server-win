@@ -1,4 +1,4 @@
-aiorpcx
+aiorpcX[ws]
 attrs
 plyvel-win32
 aiohttp
@@ -11,3 +11,4 @@ python-rapidjson
 ujson
 blake256
 pycryptodomex
+pythonnet

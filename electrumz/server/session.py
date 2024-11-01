@@ -4,7 +4,6 @@
 
 import asyncio
 import codecs
-import datetime
 import itertools
 import math
 import os
@@ -185,8 +184,10 @@ class SessionManager:
                 session_class = LocalRPC
             else:
                 session_class = self.env.coin.SESSIONCLS
-            serve = serve_rs
-
+            if service.protocol in ('ws', 'wss'):
+                serve = serve_ws
+            else:
+                serve = serve_rs
             session_factory = partial(session_class, self, self.db, self.mempool,
                                       self.peer_mgr, kind)
             host = None if service.host == 'all_interfaces' else str(service.host)
