@@ -7,3 +7,4 @@ hist/
 meta/
 utxo/
 *.exe
+test.conf

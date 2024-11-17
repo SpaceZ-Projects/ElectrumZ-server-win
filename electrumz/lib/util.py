@@ -44,15 +44,6 @@ class CompactFormatter(logging.Formatter):
         return super().format(record)
 
 
-def make_logger(name, *, handler, level):
-    '''Return the root ElectrumZ logger.'''
-    logger = logging.getLogger(name)
-    logger.addHandler(handler)
-    logger.setLevel(level)
-    logger.propagate = False
-    return logger
-
-
 def class_logger(path, classname):
     '''Return a hierarchical logger for a class.'''
     return logging.getLogger(path).getChild(classname)

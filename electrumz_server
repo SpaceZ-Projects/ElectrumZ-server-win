@@ -2,6 +2,7 @@ import asyncio
 import logging
 import sys
 import os
+import clr
 import datetime
 from pathlib import Path
 from cryptography import x509
@@ -10,9 +11,11 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 import configparser
 
-from electrumz import Controller, Env
-from electrumz.lib.util import CompactFormatter, make_logger
+clr.AddReference("System.IO")
+import System.IO as Os
 
+from electrumz import Controller, Env
+from electrumz.lib.util import CompactFormatter
 
 
 def load_config(logger):
@@ -41,7 +44,6 @@ def set_environment_variables(logger):
     """Set required environment variables."""
     appdata_local_path = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local'))
     db_directory_path = appdata_local_path / 'BTCZCommunity' / 'ElectrumZ'
-    db_directory_path.mkdir(parents=True, exist_ok=True)
     cert_file = db_directory_path / 'electrumz.crt'
     key_file = db_directory_path / 'electrumz.key'
     csr_file = db_directory_path / 'electrumz.csr'
@@ -116,7 +118,6 @@ def generate_ssl_files(logger):
         
         logger.info(f'Self-signed certificate generated at {os.environ["SSL_CERTFILE"]}')
         
-        # Delete CSR file
         os.remove(os.environ['CSR_FILE'])
         logger.info(f'CSR file deleted: {os.environ["CSR_FILE"]}')
 
@@ -134,17 +135,64 @@ def print_ansi_art(file_path):
 
 
 
+def is_already_running(lock_file):
+    if Os.File.Exists(lock_file):
+        try:
+            Os.File.Delete(lock_file)
+        except Os.IOException:
+            return True
+    return False
+
+
+def create_lock_file(lock_file):
+    try:
+        lock_file_stream = Os.FileStream(
+            lock_file,
+            Os.FileMode.CreateNew,
+            Os.FileAccess.ReadWrite,
+            Os.FileShare(0)
+        )
+    except Os.IOException:
+        return False
+    return lock_file_stream
+
+
+def remove_lock_file(lock_file):
+    if Os.File.Exists(lock_file):
+        Os.File.Delete(lock_file)
+
+
 
 def main():
     """Set up logging, environment variables, and run the server."""
-    ansi_file_path = os.path.join(os.path.dirname(__file__), 'img', 'electrumz.ans')
+    ansi_file_path = os.path.join(os.path.dirname(__file__), 'icons', 'electrumz.ans')
     print_ansi_art(ansi_file_path)
+    appdata_local_path = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local'))
+    directory_path = appdata_local_path / 'BTCZCommunity' / 'ElectrumZ'
+    lock_file = Os.Path.Combine(str(directory_path), ".lock")
+    log_directory = directory_path / 'logs'
+    log_directory.mkdir(parents=True, exist_ok=True)
+    log_file_path = log_directory / 'electrumz.log'
 
     log_fmt = Env.default('LOG_FORMAT', '%(asctime)s - %(levelname)s - %(name)s - %(message)s')
     datefmt = "%Y-%m-%d %H:%M:%S"
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(CompactFormatter(log_fmt, datefmt=datefmt))
-    logger = make_logger('electrumz', handler=handler, level='INFO')
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(CompactFormatter(log_fmt, datefmt=datefmt))
+    file_handler = logging.FileHandler(log_file_path)
+    file_handler.setFormatter(CompactFormatter(log_fmt, datefmt=datefmt))
+    logger = logging.getLogger('electrumz')
+    logger.setLevel('INFO')
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+
+    if is_already_running(lock_file):
+        logger.error("Another instance may be running.")
+        return
+
+    lock_file_stream = create_lock_file(lock_file)
+    if not lock_file_stream:
+        logger.error("Failed to create lock file. Another instance may be running.")
+        return
 
     logger.info('ElectrumZ server starting')
     try:
@@ -164,6 +212,8 @@ def main():
         logger.exception('ElectrumZ server terminated abnormally')
     else:
         logger.info('ElectrumZ server terminated normally')
+    finally:
+        remove_lock_file(lock_file)
 
 if __name__ == '__main__':
     main()
