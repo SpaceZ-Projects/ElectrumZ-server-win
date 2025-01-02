@@ -51,7 +51,6 @@ def set_environment_variables(logger):
     os.environ['HOME'] = str(db_directory_path)
     os.environ['DB_DIRECTORY'] = str(db_directory_path)
     os.environ['COIN'] = 'BitcoinZ'
-    os.environ['EVENT_LOOP_POLICY'] = 'winloop'
     os.environ['SERVICES'] = 'tcp://:50001,ssl://:50002,wss://:50004,rpc://0.0.0.0:8000'
     os.environ['SSL_CERTFILE'] = str(cert_file)
     os.environ['SSL_KEYFILE'] = str(key_file)
@@ -123,18 +122,6 @@ def generate_ssl_files(logger):
 
 
 
-def print_ansi_art(file_path):
-    try:
-        with open(file_path, 'r') as file:
-            ansi_art = file.read()
-        print(ansi_art)
-    except FileNotFoundError:
-        print(f"Error: The file {file_path} was not found.")
-    except IOError:
-        print(f"Error: Could not read the file {file_path}.")
-
-
-
 def is_already_running(lock_file):
     if Os.File.Exists(lock_file):
         try:
@@ -162,14 +149,26 @@ def remove_lock_file(lock_file):
         Os.File.Delete(lock_file)
 
 
+def print_ansi_art(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            file_content = file.read()
+        print(file_content)
+
+    except FileNotFoundError:
+        print(f"Error: The file '{file_path}' was not found.")
+    except IOError as e:
+        print(f"Error: An I/O error occurred while reading the file: {e}")
+
+
+
 
 def main():
     """Set up logging, environment variables, and run the server."""
-    ansi_file_path = os.path.join(os.path.dirname(__file__), 'icons', 'electrumz.ans')
+    ansi_file_path = os.path.join(os.path.dirname(__file__), 'icons', 'electrumz.txt')
     print_ansi_art(ansi_file_path)
     appdata_local_path = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local'))
     directory_path = appdata_local_path / 'BTCZCommunity' / 'ElectrumZ'
-    lock_file = Os.Path.Combine(str(directory_path), ".lock")
     log_directory = directory_path / 'logs'
     log_directory.mkdir(parents=True, exist_ok=True)
     log_file_path = log_directory / 'electrumz.log'
@@ -185,6 +184,7 @@ def main():
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
 
+    lock_file = Os.Path.Combine(str(directory_path), ".lock")
     if is_already_running(lock_file):
         logger.error("Another instance may be running.")
         return
@@ -196,8 +196,8 @@ def main():
 
     logger.info('ElectrumZ server starting')
     try:
-        if sys.version_info < (3, 8):
-            raise RuntimeError('ElectrumZ requires Python 3.8 or greater')
+        if sys.version_info < (3, 9):
+            raise RuntimeError('ElectrumZ requires Python 3.9')
 
         load_config(logger)
         set_environment_variables(logger)

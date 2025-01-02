@@ -3,6 +3,7 @@
 '''Class for server environment configuration and defaults.'''
 
 from os import environ
+import asyncio
 
 from electrumz.lib.util import class_logger
 
@@ -66,16 +67,5 @@ class EnvBase:
         
 
     def event_loop_policy(self):
-        '''Set the appropriate event loop policy based on the platform.'''
-        policy = self.default('EVENT_LOOP_POLICY', None)
-        if policy is None:
-            return
-
-        try:
-            import winloop
-            winloop.EventLoopPolicy()
-        except ImportError as e:
-            raise self.Error(f'Failed to import event loop: {e}')
-        except Exception as e:
-            raise self.Error(f'Unknown event loop policy "{policy}": {e}')
+        return asyncio.WindowsSelectorEventLoopPolicy()
 

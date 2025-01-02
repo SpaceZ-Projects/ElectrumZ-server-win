@@ -11,21 +11,22 @@ datas = [
     ('electrumz.conf', '.')
 ]
 
-binaries = [('env/Lib/site-packages/winloop/*', 'winloop')]
+binaries = []
 
-hiddenimports = collect_submodules('pythonnet')
+hiddenimports = []
+
 hiddenimports += collect_submodules('aiohttp')
 hiddenimports += collect_submodules('plyvel')
 hiddenimports += collect_submodules('aiorpcx')
 hiddenimports += collect_submodules('attrs')
 hiddenimports += collect_submodules('cryptography')
 hiddenimports += collect_submodules('OpenSSL')
-hiddenimports += collect_submodules('winloop')
 hiddenimports += collect_submodules('objgraph')
 hiddenimports += collect_submodules('rapidjson-stubs')
 hiddenimports += collect_submodules('ujson')
 hiddenimports += collect_submodules('blake256')
 hiddenimports += collect_submodules('Cryptodome')
+hiddenimports += collect_submodules('pythonnet')
 
 excludes=['__pycache__']
 
@@ -39,21 +40,24 @@ a = Analysis(
 )
 pyz = PYZ(a.pure)
 
-conexe = EXE(
+exe = EXE(
     pyz,
     a.scripts,
-    exclude_binaries=True,
+    a.binaries,
+    a.datas,
+    [],
     name='ElectrumZ-Server',
     debug=False,
+    bootloader_ignore_signals=False,
     strip=False,
-    upx=False,
+    upx=True,
+    upx_exclude=[],
+    runtime_tmpdir=None,
     console=True,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
     icon='icons/electrumz.ico'
 )
-
-coll = COLLECT(conexe,
-            a.binaries,
-            a.datas,
-            strip=False,
-            upx=False,
-            name=os.path.join('dist', 'electrumz-server'))

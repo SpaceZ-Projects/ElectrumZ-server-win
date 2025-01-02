@@ -94,13 +94,13 @@ class ServerBase:
 
         async def serve():
             try:
-                await self.serve(shutdown_event)
+                await self.serve(self._shutdown_event)
             finally:
-                shutdown_event.set()
+                self._shutdown_event.set()
 
         self.start_time = time.time()
         loop = asyncio.get_event_loop()
-        shutdown_event = asyncio.Event()
+        self._shutdown_event = asyncio.Event()
 
         if platform.system() != 'Windows':
             # No signals on Windows
@@ -110,17 +110,33 @@ class ServerBase:
         loop.set_exception_handler(self.on_exception)
 
         # Start serving and wait for shutdown, log receipt of the event
-        server_task = await spawn(serve, daemon=True)
+        self._server_task = await spawn(serve, daemon=True)
         try:
-            await shutdown_event.wait()
+            await self._shutdown_event.wait()
         except KeyboardInterrupt:
             self.logger.warning('received keyboard interrupt, initiating shutdown')
 
         self.logger.info('shutting down')
 
-        server_task.cancel()
+        self._server_task.cancel()
         try:
             with suppress(asyncio.CancelledError):
-                await server_task
+                await self._server_task
         finally:
             self.logger.info('shutdown complete')
+
+    
+    def stop(self):
+        '''Stop the server gracefully. This will cancel the server task and set the shutdown event.'''
+        if self._server_task:
+            self.logger.info('Stopping server...')
+            self._shutdown_event.set()  # Trigger shutdown event
+
+            # Cancel the server task
+            self._server_task.cancel()
+
+            try:
+                with suppress(asyncio.CancelledError):
+                    asyncio.create_task(self._server_task)
+            finally:
+                self.logger.info('Server stopped.')

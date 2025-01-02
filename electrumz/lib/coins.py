@@ -289,8 +289,7 @@ class BitcoinZ(EquihashMixin, Coin):
     PEERS = [
         'electrum1.btcz.rocks s t',
         'electrum2.btcz.rocks s t',
-        'electrum3.btcz.rocks s t',
-        'electrum5.btcz.rocks s t'
+        'electrum3.btcz.rocks s t'
     ]    
 
     @classmethod

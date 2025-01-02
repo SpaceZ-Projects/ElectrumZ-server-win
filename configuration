@@ -1,0 +1,245 @@
+
+from runtime.formz import (
+    MainWindow, App, Os, TextInput,
+    Color, Label, FontStyle, Box
+)
+
+class Config(MainWindow):
+    def __init__(self):
+        super(Config, self).__init__()
+
+        self.app = App()
+        icon_path = Os.Path.Combine(self.app.app_path, "icons/electrumz.ico")
+        self.title = "Server Configuration"
+        self.size = (600, 400)
+        self.center_screen = True
+        self.maxmizable = False
+        self.resizable = False
+        self.icon = icon_path
+        self.background_color = Color.rgb(30,33,36)
+
+        self.display_labels()
+        self.display_inputs()
+        self.display_button()
+
+    def display_labels(self):
+        self.daemon_url = Label(
+            text = "Daemon URL :",
+            location = (40, 50),
+            text_color = Color.WHITE,
+            style = FontStyle.BOLD,
+            size = 11
+        )
+        self.report_services = Label(
+            text = "Report Services :",
+            location = (25, 100),
+            text_color = Color.WHITE,
+            style = FontStyle.BOLD,
+            size = 11
+        )
+        self.cache_mb = Label(
+            text = "Cache MB :",
+            location = (60, 150),
+            text_color = Color.WHITE,
+            style = FontStyle.BOLD,
+            size = 11
+        )
+        self.db_engine = Label(
+            text = "DB Engine :",
+            location = (58, 200),
+            text_color = Color.WHITE,
+            style = FontStyle.BOLD,
+            size = 11
+        )
+        self.donation_address = Label(
+            text = "Donation Address :",
+            location = (12, 250),
+            text_color = Color.WHITE,
+            style = FontStyle.BOLD,
+            size = 11
+        )
+        self.example_label = Label(
+            text = "",
+            text_color = Color.YELLOW,
+            size = 9,
+            visible = False
+        )
+
+        self.insert(
+            [
+                self.daemon_url,
+                self.report_services,
+                self.cache_mb,
+                self.db_engine,
+                self.donation_address
+            ]
+        )
+
+    def display_inputs(self):
+        self.daemon_url_input = TextInput(
+            size = (350, 30),
+            location = (150, 50),
+            background_color = Color.rgb(40,43,48),
+            text_color = Color.rgb(84, 104, 177),
+            on_enter = self.deamon_url_enter
+        )
+        self.report_services_input = TextInput(
+            size = (350, 30),
+            location = (150, 100),
+            background_color = Color.rgb(40,43,48),
+            text_color = Color.rgb(114,137,218),
+            on_enter = self.report_services_enter
+        )
+        self.cache_mb_input = TextInput(
+            size = (350, 30),
+            location = (150, 150),
+            background_color = Color.rgb(40,43,48),
+            text_color = Color.rgb(114,137,218),
+            value = "1200",
+            on_enter = self.cache_mb_enter
+        )
+        self.db_engine_input = TextInput(
+            size = (350, 30),
+            location = (150, 200),
+            read_only = True,
+            value = "leveldb",
+            background_color = Color.rgb(40,43,48),
+            text_color = Color.rgb(114,137,218),
+            on_enter = self.db_engine_enter
+        )
+        self.donation_address_input = TextInput(
+            size = (350, 30),
+            location = (150, 250),
+            background_color = Color.rgb(40,43,48),
+            text_color = Color.rgb(114,137,218),
+            on_enter = self.donation_address_enter
+        )
+
+        self.insert(
+            [
+                self.daemon_url_input,
+                self.report_services_input,
+                self.cache_mb_input,
+                self.db_engine_input,
+                self.donation_address_input,
+                self.example_label
+            ]
+        )
+
+    def display_button(self):
+        self.build_button = Box(
+            size = (100, 30),
+            location = (450, 310),
+            background_color = Color.rgb(114,137,218),
+            mouse_enter = self.build_button_mouse_enter,
+            mouse_leave = self.build_button_mouse_leave,
+            on_click = self.build_button_click
+        )
+        self.build_button_txt = Label(
+            text = "Build",
+            style = FontStyle.BOLD,
+            text_color = Color.WHITE,
+            location = (27, 3),
+            mouse_enter = self.build_button_txt_mouse_enter,
+            mouse_leave = self.build_button_txt_mouse_leave,
+            on_click = self.build_button_click
+        )
+        self.build_button.insert(
+            [
+                self.build_button_txt
+            ]
+        )
+
+        self.insert(
+            [
+                self.build_button
+            ]
+        )
+
+    def build_button_click(self, button):
+        daemon_url = self.daemon_url_input.value
+        report_services = self.report_services_input.value
+        cache_mb = self.cache_mb_input.value
+        db_engine = self.db_engine_input.value
+        donation_address = self.donation_address_input.value
+        if not daemon_url:
+            return
+        if not cache_mb:
+            cache_mb = 1200
+        conf_filename = "electrumz.conf"
+        try:
+            with open(conf_filename, "w") as conf_file:
+                conf_file.write("[server]\n")
+                conf_file.write(f"daemon_url = {daemon_url}\n")
+                conf_file.write(f"report_services = {report_services}\n")
+                conf_file.write(f"cache_mb = {cache_mb}\n")
+                conf_file.write(f"db_engine = {db_engine}\n")
+                conf_file.write(f"donation_address = {donation_address}\n")
+            print(f"{conf_filename} file created successfully.")
+            self.make_batch_file()
+
+        except Exception as e:
+            print(f"Error: {e}")
+
+
+    def make_batch_file(self):
+        batch_filename = "make.bat"
+        try:
+            with open(batch_filename, "w") as batch_file:
+                batch_file.write("pip install -r requirements.txt\n")
+                batch_file.write("pyinstaller deterministic.spec\n")
+                self.exit()   
+        except Exception as e:
+            print(f"Error creating batch file: {e}")
+
+
+
+    def deamon_url_enter(self):
+        self.example_label.text = "Required : e.g : http://rpcuser:rpcpassword@127.0.0.1:rpcport"
+        self.example_label.location = (150, 75)
+        self.example_label.visible = True
+
+    def report_services_enter(self):
+        self.example_label.text = "e.g : tcp://example.com:50001,ssl://example.com:50002,wss://example.com:50004"
+        self.example_label.location = (150, 125)
+        self.example_label.visible = True
+
+    def cache_mb_enter(self):
+        self.example_label.text = "The amount of cache, in MB, The default is 1,200"
+        self.example_label.location = (150, 175)
+        self.example_label.visible = True
+
+    def db_engine_enter(self):
+        self.example_label.visible = False
+
+    def donation_address_enter(self):
+        self.example_label.text = "The server donation address"
+        self.example_label.location = (150, 275)
+        self.example_label.visible = True
+
+    def build_button_mouse_enter(self):
+        self.build_button.background_color = Color.rgb(85, 102, 163)
+        self.build_button_txt.text_color = Color.BLACK
+
+    def build_button_mouse_leave(self):
+        self.build_button.background_color = Color.rgb(114,137,218)
+        self.build_button_txt.text_color = Color.WHITE
+
+    def build_button_txt_mouse_enter(self):
+        self.build_button.background_color = Color.rgb(85, 102, 163)
+        self.build_button_txt.text_color = Color.BLACK
+
+    def build_button_txt_mouse_leave(self):
+        self.build_button.background_color = Color.rgb(114,137,218)
+        self.build_button_txt.text_color = Color.WHITE
+
+        
+
+
+def main():
+    app = Config()
+    app.run()
+
+
+if __name__ == "__main__":
+    app = main()
