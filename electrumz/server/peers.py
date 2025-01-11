@@ -284,6 +284,12 @@ class PeerManager:
                     await self._verify_peer(session, peer)
                 is_good = True
                 break
+            except LookupError as e:
+                # Handle the DNS lookup error here
+                self.logger.error(f"{peer_text} failed to resolve: {e}")
+                # Optionally, you can retry after some delay or mark the peer as bad
+                await asyncio.sleep(5)
+                continue
             except BadPeerError as e:
                 self.logger.error(f'{peer_text} marking bad: ({e})')
                 peer.mark_bad()
